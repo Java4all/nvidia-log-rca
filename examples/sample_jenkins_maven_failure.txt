@@ -1,0 +1,81 @@
+NOTE: Synthetic redacted excerpt for local RCA demos — organisation/host identifiers replaced from source screenshot.
+
+10:01:10  deployment-service-executing: mavenBuild()
+expected to call org.codehaus.groovy.runtime.MethodClosure.call but wound up catching mavenBuild.action; see: https://jenkins.io/redirect/pipeline-cps-method-mismatches/
+[Pipeline] fileExists
+[Pipeline] readYaml
+[Pipeline] fileExists
+[Pipeline] fileExists
+[Pipeline] readYaml
+[Pipeline] fileExists
+[Pipeline] readYaml
+[Pipeline] dir
+10:01:12  Running in /var/lib/cloudbees-core-cm/workspace/[REDACTED]_UK/appCode
+[Pipeline] {
+[Pipeline] echo
+10:01:13  JdkVersion is set to: azul21
+[Pipeline] echo
+10:01:13  run maven
+[Pipeline] fileExists
+[Pipeline] sh
+10:01:13  + find /opt/build_tools/azul-zulu -name azul21
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+10:01:14  + mvn -B -Dsettings.security=/var/lib/cloudbees-core-cm/workspace/[REDACTED]_UK/mvnSettings/settings-security.xml -s /var/lib/cloudbees-core-cm/workspace/[REDACTED]_UK/mvnSettings/settings.xml clean install -T 1 -DskipTests -P my-hb
+10:01:16  [INFO] Scanning for projects...
+10:01:17  [WARNING]
+10:01:17  [WARNING] Some problems were encountered while building the effective model for com.[REDACTED].rbwm.digital.dcos:[REDACTED]-accounts-my-hb:jar:1.8.8
+10:01:17  [WARNING] 'version' contains an expression but should be a constant. @ com.[REDACTED].rbwm.digital.dcos:[REDACTED]-accounts-my-hb:${entityVersion}, /var/lib/cloudbees-core-cm/workspace/[REDACTED]_UK/appCode/pom.xml, line 12, column 12
+10:01:17  [WARNING]
+10:01:17  [WARNING] It is highly recommended to fix these problems because they threaten the stability of your build.
+10:01:17  [WARNING]
+10:01:17  [WARNING] For this reason, future Maven versions might no longer support building such malformed projects.
+10:01:17  [WARNING]
+10:01:17  [INFO] ------------------------------------------------------------------------
+10:01:17  [INFO] Building [REDACTED]-accounts-my-hb 1.0.0
+10:01:17  [INFO]   from pom.xml
+10:01:17  [INFO] --------------------------------[ jar ]---------------------------------
+10:01:17  [INFO] Downloading from nexus-digital-snapshots: https://[REDACTED]:8081/nexus/repository/maven-group/[REDACTED]/maven-metadata.xml
+10:01:17  [INFO] Downloaded from nexus-digital-snapshots: https://[REDACTED]:8081/nexus/repository/maven-group/[REDACTED]/maven-metadata.xml
+10:01:18  [INFO] Downloading from nexus-digital-snapshots: https://[REDACTED]:8081/nexus/repository/maven-group/[REDACTED]/common-metadata.xml (2.9 kB at 4.3 kB/s)
+10:01:18  [INFO] Downloaded from nexus-digital-snapshots: https://[REDACTED]:8081/nexus/repository/maven-group/[REDACTED]/common-metadata.xml (2.9 kB at 4.3 kB/s)
+10:01:18  [INFO] Downloading from nexus-digital: https://[REDACTED]:8081/nexus/repository/maven-group/[REDACTED]/common/7.0.0/[REDACTED]-common-7.0.0.pom
+10:01:18  [INFO] Downloaded from nexus-digital: https://[REDACTED]:8081/nexus/repository/maven-group/[REDACTED]/common/7.0.0/[REDACTED]-common-7.0.0.pom (1.9 kB at 20 kB/s)
+10:01:18  [INFO] Downloading from nexus-digital: https://[REDACTED]:8081/nexus/repository/maven-group/[REDACTED]/domain-parent/4.1.0/[REDACTED]-parent-4.1.0.pom
+10:03:06  [INFO] Copying 79 resources to /var/lib/cloudbees-core-cm/workspace/[REDACTED]_UK/appCode/target/classes/META-INF/src/main/api/
+10:03:06  [INFO] Copying 1 resource to classes/META-INF/src/main/propertyfiles/
+10:03:06  [INFO] Copying 127 resources to /var/lib/cloudbees-core-cm/workspace/[REDACTED]_UK/appCode/target/classes
+10:03:06  [INFO]
+10:03:06  [INFO] --- compiler:3.8.1:compile (default-compile) @ [REDACTED]-accounts-my-hb ---
+10:03:07  [INFO] Changes detected - recompiling the module!
+10:03:07  [INFO] Compiling 28 source files to /var/lib/cloudbees-core-cm/workspace/[REDACTED]_UK/appCode/target/classes
+10:03:09  [INFO] ------------------------------------------------------------------------
+10:03:09  [INFO] BUILD FAILURE
+10:03:09  [INFO] ------------------------------------------------------------------------
+10:03:09  [INFO] Total time:  01:52 min
+10:03:09  [INFO] Finished at: 2023-09-25T08:03:09Z
+10:03:09  [INFO] ------------------------------------------------------------------------
+10:03:09  [ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.8.1:compile (default-compile) on project [REDACTED]-accounts-my-hb: Fatal error compiling: java.lang.ExceptionInInitializerError: Unable to make field private com.sun.tools.javac.processing.JavacProcessingEnvironment$DiscoveredProcessors com.sun.tools.javac.processing.JavacProcessingEnvironment.discoveredProcs accessible: module jdk.compiler does not "opens com.sun.tools.javac.processing" to unnamed module @6cdfae17 -> [Help 1]
+10:03:09  [ERROR]
+10:03:09  [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+10:03:09  [ERROR] Re-run Maven using the -X switch to enable full debug logging.
+10:03:09  [ERROR]
+10:03:09  [ERROR] For more information about the errors and possible solutions, please read the following articles:
+10:03:09  [ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // dir
+[Pipeline] }
+[Pipeline] // timestamps
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] }
+[Pipeline] // sendSplunkConsoleLog
+[Pipeline] End of Pipeline
+ERROR: script returned exit code 1
+
+GitHub has been notified of this commit's build result
