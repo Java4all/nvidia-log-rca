@@ -71,6 +71,18 @@ def _write_temp(raw: bytes) -> str:
         return f.name
 
 
+# Sentinel: StopIteration must not propagate from thread pool into asyncio (PEP 479 / futures).
+_STREAM_DONE = object()
+
+
+def _next_sse_chunk(gen):
+    """Pull one chunk from sync generator; never raises StopIteration."""
+    try:
+        return next(gen)
+    except StopIteration:
+        return _STREAM_DONE
+
+
 def _stream_pipeline(question: str, tmp_path: str):
     """
     Blocking generator — runs bat_ai.app.stream() and yields SSE strings.
@@ -197,11 +209,10 @@ async def analyze_stream(
         loop = asyncio.get_event_loop()
         gen  = _stream_pipeline(question, tmp_path)
         while True:
-            try:
-                chunk = await loop.run_in_executor(None, next, gen)
-                yield chunk
-            except StopIteration:
+            chunk = await loop.run_in_executor(None, _next_sse_chunk, gen)
+            if chunk is _STREAM_DONE:
                 break
+            yield chunk
 
     return StreamingResponse(
         event_generator(),

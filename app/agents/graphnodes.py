@@ -67,10 +67,23 @@ class Nodes:
         ret_documents = state["documents"]
         filtered_docs = []
         for doc in ret_documents:
-            score = automation.retrieval_grader.invoke(
-                {"question": question, "document": doc.page_content}
-            )
-            grade = score.binary_score
+            try:
+                score = automation.retrieval_grader.invoke(
+                    {"question": question, "document": doc.page_content}
+                )
+            except Exception as e:
+                print(f"---GRADE: retrieval_grader invoke failed ({e}), keeping chunk---")
+                filtered_docs.append(doc)
+                continue
+            if score is None:
+                print("---GRADE: structured output empty (None), keeping chunk---")
+                filtered_docs.append(doc)
+                continue
+            grade = getattr(score, "binary_score", None)
+            if grade is None:
+                print("---GRADE: missing binary_score, keeping chunk---")
+                filtered_docs.append(doc)
+                continue
             if grade == "yes":
                 print("---GRADE: DOCUMENT RELEVANT---")
                 filtered_docs.append(doc)
