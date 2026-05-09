@@ -1,0 +1,50 @@
+# ── Secrets ───────────────────────────────────────────────────────────────────
+.env
+*.key
+*.pem
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-wheel-metadata/
+.venv/
+venv/
+env/
+
+# ── Logs (don't commit test log files) ───────────────────────────────────────
+*.log
+logs/
+sample_logs/
+
+# ── Docker volumes (local bind mounts) ───────────────────────────────────────
+volumes/
+
+# ── Ollama model cache (if bind-mounted locally) ──────────────────────────────
+.ollama/
+
+# ── HuggingFace reranker cache ────────────────────────────────────────────────
+.cache/
+
+# ── Chainlit ──────────────────────────────────────────────────────────────────
+.chainlit/
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Pytest / coverage ─────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
