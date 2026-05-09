@@ -11,7 +11,6 @@ import os
 import sys
 import json
 import tempfile
-import asyncio
 import httpx
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -69,18 +68,6 @@ def _write_temp(raw: bytes) -> str:
     with tempfile.NamedTemporaryFile(mode="wb", suffix=".log", delete=False) as f:
         f.write(raw)
         return f.name
-
-
-# Sentinel: StopIteration must not propagate from thread pool into asyncio (PEP 479 / futures).
-_STREAM_DONE = object()
-
-
-def _next_sse_chunk(gen):
-    """Pull one chunk from sync generator; never raises StopIteration."""
-    try:
-        return next(gen)
-    except StopIteration:
-        return _STREAM_DONE
 
 
 def _stream_pipeline(question: str, tmp_path: str):
@@ -204,18 +191,11 @@ async def analyze_stream(
         raise HTTPException(status_code=400, detail="Log file is empty.")
 
     tmp_path = _write_temp(raw)
-
-    async def event_generator():
-        loop = asyncio.get_event_loop()
-        gen  = _stream_pipeline(question, tmp_path)
-        while True:
-            chunk = await loop.run_in_executor(None, _next_sse_chunk, gen)
-            if chunk is _STREAM_DONE:
-                break
-            yield chunk
-
+    # Pass a sync generator — Starlette wraps it with iterate_in_threadpool(), which
+    # safely converts StopIteration (see starlette.concurrency._next). Do not use
+    # asyncio.run_in_executor(next, gen): that leaks StopIteration into futures.
     return StreamingResponse(
-        event_generator(),
+        _stream_pipeline(question, tmp_path),
         media_type="text/event-stream",
         headers={
             "Cache-Control":    "no-cache",

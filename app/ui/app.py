@@ -19,6 +19,10 @@ API_URL = os.getenv("API_URL", "http://api:8000")
 # Match API cap (docker default 50 MB); Chainlit AskFileMessage allows at most 100 MB.
 _MAX_LOG_MB = min(100, int(os.getenv("MAX_LOG_MB", "50")))
 
+# Avoid HTTP/2 + helps prevent httpcore/anyio cancel-scope teardown races with Chainlit.
+_HTTPX_TIMEOUT = httpx.Timeout(600.0, connect=30.0)
+_HTTPX_TRANSPORT = httpx.AsyncHTTPTransport(http2=False)
+
 # Common QA questions shown as quick-action buttons
 QA_QUICK_QUESTIONS = [
     "What caused the build failure?",
@@ -213,70 +217,75 @@ async def run_analysis(question: str):
         with open(log_path, "rb") as fh:
             raw = fh.read()
 
-        async with httpx.AsyncClient(timeout=600) as client:
+        async with httpx.AsyncClient(
+            timeout=_HTTPX_TIMEOUT,
+            transport=_HTTPX_TRANSPORT,
+        ) as client:
             async with client.stream(
                 "POST",
                 f"{API_URL}/api/analyze/stream",
                 files={"log_file": (log_name, raw, "text/plain")},
                 data={"question": question},
             ) as resp:
-
-                if resp.status_code != 200:
-                    body = await resp.aread()
-                    err  = json.loads(body).get("detail", body.decode())
-                    await pipeline_msg.remove()
-                    await cl.Message(
-                        content=f"❌ **API error {resp.status_code}:** {err}"
-                    ).send()
-                    return
-
-                async for line in resp.aiter_lines():
-                    if not line.startswith("data: "):
-                        continue
-
-                    event = json.loads(line[6:])
-                    etype = event.get("type")
-
-                    if etype == "step":
-                        node = event["node"]
-
-                        if node == "transform_query":
-                            retry_count += 1
-                            # Remove retrieve/grade from done so they show as pending again
-                            for s in ["retrieve", "rerank", "grade_documents"]:
-                                if s in steps_done:
-                                    steps_done.remove(s)
-
-                        # Update pipeline display
-                        pipeline_msg.content = _render_pipeline(current_step=node)
-                        await pipeline_msg.update()
-
-                        # Show individual step as a Chainlit Step (collapsible)
-                        icon, label, detail = STEP_CONFIG.get(
-                            node, ("⚙️", node, "")
-                        )
-                        async with cl.Step(name=f"{icon} {label}") as step:
-                            step.output = detail
-                            if node == "transform_query":
-                                step.output = (
-                                    f"{detail}\n\n"
-                                    f"_Original:_ {question}"
-                                )
-
-                        if node not in steps_done and node != "transform_query":
-                            steps_done.append(node)
-
-                    elif etype == "result":
-                        result_data = event
-                        pipeline_msg.content = _render_pipeline(done=True)
-                        await pipeline_msg.update()
-
-                    elif etype == "error":
-                        pipeline_msg.content = _render_pipeline(
-                            error=event.get("message", "Unknown error")
-                        )
-                        await pipeline_msg.update()
+                try:
+                    if resp.status_code != 200:
+                        body = await resp.aread()
+                        err  = json.loads(body).get("detail", body.decode())
+                        await pipeline_msg.remove()
+                        await cl.Message(
+                            content=f"❌ **API error {resp.status_code}:** {err}"
+                        ).send()
                         return
+
+                    async for line in resp.aiter_lines():
+                        if not line.startswith("data: "):
+                            continue
+
+                        event = json.loads(line[6:])
+                        etype = event.get("type")
+
+                        if etype == "step":
+                            node = event["node"]
+
+                            if node == "transform_query":
+                                retry_count += 1
+                                for s in ["retrieve", "rerank", "grade_documents"]:
+                                    if s in steps_done:
+                                        steps_done.remove(s)
+
+                            pipeline_msg.content = _render_pipeline(current_step=node)
+                            await pipeline_msg.update()
+
+                            icon, label, detail = STEP_CONFIG.get(
+                                node, ("⚙️", node, "")
+                            )
+                            async with cl.Step(name=f"{icon} {label}") as step:
+                                step.output = detail
+                                if node == "transform_query":
+                                    step.output = (
+                                        f"{detail}\n\n"
+                                        f"_Original:_ {question}"
+                                    )
+
+                            if node not in steps_done and node != "transform_query":
+                                steps_done.append(node)
+
+                        elif etype == "result":
+                            result_data = event
+                            pipeline_msg.content = _render_pipeline(done=True)
+                            await pipeline_msg.update()
+
+                        elif etype == "error":
+                            pipeline_msg.content = _render_pipeline(
+                                error=event.get("message", "Unknown error")
+                            )
+                            await pipeline_msg.update()
+                            return
+                finally:
+                    try:
+                        await resp.aread()
+                    except Exception:
+                        pass
 
     except httpx.TimeoutException:
         pipeline_msg.content = _render_pipeline(error="Request timed out")

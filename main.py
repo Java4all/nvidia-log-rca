@@ -11,7 +11,6 @@ import os
 import sys
 import json
 import tempfile
-import asyncio
 import httpx
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -192,19 +191,8 @@ async def analyze_stream(
         raise HTTPException(status_code=400, detail="Log file is empty.")
 
     tmp_path = _write_temp(raw)
-
-    async def event_generator():
-        loop = asyncio.get_event_loop()
-        gen  = _stream_pipeline(question, tmp_path)
-        while True:
-            try:
-                chunk = await loop.run_in_executor(None, next, gen)
-                yield chunk
-            except StopIteration:
-                break
-
     return StreamingResponse(
-        event_generator(),
+        _stream_pipeline(question, tmp_path),
         media_type="text/event-stream",
         headers={
             "Cache-Control":    "no-cache",
