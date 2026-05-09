@@ -16,6 +16,8 @@ import httpx
 import chainlit as cl
 
 API_URL = os.getenv("API_URL", "http://api:8000")
+# Match API cap (docker default 50 MB); Chainlit AskFileMessage allows at most 100 MB.
+_MAX_LOG_MB = min(100, int(os.getenv("MAX_LOG_MB", "50")))
 
 # Common QA questions shown as quick-action buttons
 QA_QUICK_QUESTIONS = [
@@ -45,14 +47,32 @@ async def start():
     cl.user_session.set("log_name",  None)
     cl.user_session.set("log_lines", None)
 
-    await cl.Message(content=(
-        "## 🔍 Jenkins RCA — BAT.AI\n\n"
-        "Upload a Jenkins log file and I'll identify the root cause of your build failure "
-        "using a self-corrective multi-agent RAG pipeline.\n\n"
-        "---\n"
-        "**To get started:** click **📎** and attach your `.log` or `.txt` file.\n\n"
-        "_Tip: You can ask follow-up questions without re-uploading the log._"
-    )).send()
+    # Dedicated upload widget (Browse / drag-drop). Composer may not show a paperclip icon.
+    uploaded = await cl.AskFileMessage(
+        content=(
+            "## 🔍 Jenkins RCA — BAT.AI\n\n"
+            "Upload a Jenkins log (`.log` or `.txt`) using the **drag-and-drop area** "
+            "or **Browse** below — this app analyses build failures with a self-corrective "
+            "multi-agent RAG pipeline.\n\n"
+            "_After your log is loaded you can ask follow-up questions without uploading again._"
+        ),
+        accept={
+            "text/plain": [".log", ".txt", ".text"],
+            "application/octet-stream": [".log"],
+        },
+        max_size_mb=_MAX_LOG_MB,
+        max_files=1,
+        timeout=600,
+        raise_on_timeout=False,
+    ).send()
+
+    if not uploaded:
+        await cl.Message(
+            content="⚠️ No log file was received. Refresh the page to upload your Jenkins log."
+        ).send()
+        return
+
+    await _apply_log_session(uploaded[0].path, uploaded[0].name)
 
     # Show quick question buttons
     actions = [
@@ -108,11 +128,8 @@ async def on_message(msg: cl.Message):
     await run_analysis(msg.content.strip())
 
 
-async def _handle_log_upload(el):
-    """Process an uploaded log file and show build info."""
-    log_path = el.path
-    log_name = getattr(el, "name", os.path.basename(log_path))
-
+async def _apply_log_session(log_path: str, log_name: str):
+    """Store log path in session and confirm to the user."""
     try:
         with open(log_path, "r", errors="replace") as f:
             content = f.read()
@@ -127,8 +144,15 @@ async def _handle_log_upload(el):
     await cl.Message(content=(
         f"📂 **Log loaded:** `{log_name}`\n"
         f"📏 **Lines:** {line_count:,}\n\n"
-        "Ask a question or click a quick question above to analyse this log."
+        "Ask a question or use a quick question below to analyse this log."
     )).send()
+
+
+async def _handle_log_upload(el):
+    """Process a log attached on a follow-up message (same session)."""
+    log_path = el.path
+    log_name = getattr(el, "name", os.path.basename(log_path))
+    await _apply_log_session(log_path, log_name)
 
 
 # ── Core analysis function ────────────────────────────────────────────────────

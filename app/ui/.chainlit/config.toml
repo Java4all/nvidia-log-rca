@@ -9,10 +9,16 @@ default_collapse_content = true
 show_readme_as_default = false
 
 [features]
-multi_modal = true
 prompt_playground = false
 # Enable action buttons (used for quick question shortcuts)
 action_buttons = true
+
+# Renamed from multi_modal in Chainlit ≥1.1 — attachment control in the composer + AskFileMessage
+[features.spontaneous_file_upload]
+enabled = true
+accept = ["text/plain", "application/octet-stream", "text/*"]
+max_files = 5
+max_size_mb = 50
 
 [meta]
 generated_by = "1.3.0"
