@@ -1,0 +1,26 @@
+# ── Core (from NVIDIA requirements.txt, versions preserved) ──────────────────
+langchain==0.3.20
+langchain-core==0.3.45
+langchain-community==0.3.19
+langgraph>=0.0.10
+faiss-cpu==1.9.0.post1
+typing-extensions==4.12.2
+python-dotenv==1.0.1
+numpy==1.26.4
+pandas==2.2.3
+requests==2.32.3
+tqdm==4.66.5
+rank_bm25==0.2.1
+pydantic>=2.0.0
+
+# ── Local model swap (replaces langchain-nvidia-ai-endpoints) ─────────────────
+langchain-ollama==0.2.3
+
+# ── Local reranker (replaces NVIDIARerank) ────────────────────────────────────
+FlagEmbedding==1.3.3
+
+# ── FastAPI backend ───────────────────────────────────────────────────────────
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+httpx==0.28.1
