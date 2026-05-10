@@ -14,6 +14,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 COPY .chainlit/ .chainlit/
 COPY public/ public/
+COPY chainlit.md chainlit.md
 COPY app.py .
 
 ENV PYTHONPATH=/ui

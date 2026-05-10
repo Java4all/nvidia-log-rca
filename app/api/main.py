@@ -25,6 +25,23 @@ import bat_ai
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
 MAX_LOG_BYTES   = int(os.getenv("MAX_LOG_BYTES", str(50 * 1024 * 1024)))
 
+
+def _format_stream_error(exc: Exception) -> str:
+    """Surface actionable hints when NVIDIA cloud LLM rejects the request."""
+    msg = str(exc)
+    backend = os.getenv("LLM_BACKEND", "ollama").lower().strip()
+    if backend != "nvidia":
+        return msg
+    low = msg.lower()
+    if "403" in msg or "authorization failed" in low or "401" in msg:
+        return (
+            f"{msg} "
+            "— NVIDIA AI Endpoints rejected this call. Verify NVIDIA_API_KEY (NGC), "
+            "that your account can use NVIDIA_LLM_MODEL, or set LLM_BACKEND=ollama "
+            "with Ollama running."
+        )
+    return msg
+
 # Human-readable labels for each graph node — for QA engineers
 NODE_LABELS = {
     "retrieve":        ("🔍", "Retrieving log chunks",    "Hybrid BM25 + FAISS search across log file"),
@@ -104,7 +121,7 @@ def _stream_pipeline(question: str, tmp_path: str):
         yield f"data: {json.dumps(result)}\n\n"
 
     except Exception as e:
-        yield f"data: {json.dumps({'type':'error','message':str(e)})}\n\n"
+        yield f"data: {json.dumps({'type':'error','message':_format_stream_error(e)})}\n\n"
     finally:
         try:
             os.unlink(tmp_path)
@@ -171,7 +188,9 @@ async def analyze(
             for _, v in output.items():
                 value = v
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Pipeline error: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Pipeline error: {_format_stream_error(e)}"
+        )
     finally:
         try:
             os.unlink(tmp_path)

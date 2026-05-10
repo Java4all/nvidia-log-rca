@@ -85,6 +85,9 @@ services:
     restart: unless-stopped
     environment:
       API_URL: http://api:8000
+      MAX_LOG_MB:             ${MAX_LOG_MB:-50}
+      EVIDENCE_MAX_CHUNKS:    ${EVIDENCE_MAX_CHUNKS:-8}
+      EVIDENCE_PREVIEW_CHARS: ${EVIDENCE_PREVIEW_CHARS:-1500}
     depends_on:
       - api
 

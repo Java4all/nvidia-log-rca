@@ -28,3 +28,17 @@ html.dark header {
 main [class*="Message"] {
   border-radius: 6px;
 }
+
+/* Action chips — Log-RCA toolbar */
+[data-testid="message-actions"] button,
+main [class*="Message"] [role="group"] button {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* Pipeline checklist readability */
+[data-testid="message-content"] h3:first-child {
+  margin-top: 0;
+}
+
+/* Primary actions first (Replace log / Export) — subtle emphasis via order only in DOM */
