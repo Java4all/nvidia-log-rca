@@ -6,8 +6,10 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 COMPOSE = docker compose
+# Faster rebuilds: layer cache + pip wheel cache (requires BuildKit — default on Docker Desktop / recent Engine)
+export DOCKER_BUILDKIT := 1
 
-.PHONY: help setup build up down destroy \
+.PHONY: help setup build build-nocache build-ui build-ui-nocache up down destroy \
         logs logs-api logs-ui logs-ollama \
         ps health pull-models \
         restart-api restart-ui \
@@ -18,7 +20,10 @@ help:
 	@echo "  Log-RCA"
 	@echo "  ─────────────────────────────────────────────"
 	@echo "  make setup          Create .env from .env.example"
-	@echo "  make build          Build Docker images"
+	@echo "  make build          Build all images (uses Docker layer cache)"
+	@echo "  make build-nocache  Build all images from scratch (--no-cache)"
+	@echo "  make build-ui       Rebuild UI (cached) + up -d ui"
+	@echo "  make build-ui-nocache  Rebuild UI --no-cache + up -d ui"
 	@echo "  make up             Start stack + pull models"
 	@echo "  make down           Stop (keep volumes)"
 	@echo "  make destroy        Stop + DELETE volumes ⚠️"
@@ -47,7 +52,18 @@ setup:
 	fi
 
 build: setup
+	$(COMPOSE) build
+
+build-nocache: setup
 	$(COMPOSE) build --no-cache
+
+build-ui:
+	$(COMPOSE) build ui
+	$(COMPOSE) up -d ui
+
+build-ui-nocache:
+	$(COMPOSE) build --no-cache ui
+	$(COMPOSE) up -d ui
 
 up: setup
 	$(COMPOSE) up -d
