@@ -12,7 +12,7 @@ running locally on EC2 g6.xlarge using Ollama instead of NVIDIA NIM APIs.
 - `prompt.json` — all 6 prompt templates (verbatim)
 
 ### Files adapted for local (minimal changes)
-- `utils.py` — `ChatNVIDIA` → `ChatOllama`
+- `utils.py` — default `ChatOllama`; optional `ChatNVIDIA` via `LLM_BACKEND=nvidia` + `NVIDIA_API_KEY`
 - `multiagent.py` — `NVIDIAEmbeddings` → `OllamaEmbeddings`, same chunk sizes (20000/10000), same EnsembleRetriever weights (0.5/0.5)
 - `graphnodes.py` — `NVIDIARerank` → `FlagReranker(BAAI/bge-reranker-v2-m3)`
 - `binary_score_models.py` — `pydantic_v1` → `pydantic` (v2 compatibility fix)

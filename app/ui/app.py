@@ -94,10 +94,10 @@ async def start():
             data = r.json()
         ok = data.get("ollama") == "ok"
         status = "Models ready" if ok else "Model service degraded"
+        be = data.get("llm_backend", "ollama")
         await cl.Message(content=(
-            f"**{status}** — LLM `{data.get('llm_model')}` · "
-            f"Embed `{data.get('embed_model')}` · "
-            f"Runtime `{data.get('ollama')}`"
+            f"**{status}** — backend `{be}` · LLM `{data.get('llm_model')}` · "
+            f"Embed `{data.get('embed_model')}` · Ollama `{data.get('ollama')}`"
         )).send()
     except Exception:
         await cl.Message(

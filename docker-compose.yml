@@ -13,7 +13,11 @@ version: "3.9"
 
 x-common-env: &common-env
   OLLAMA_BASE_URL: http://ollama:11434
+  LLM_BACKEND:     ${LLM_BACKEND:-ollama}
+  # ollama: LLM_MODEL | nvidia: ChatNVIDIA + NVIDIA_API_KEY + optional NVIDIA_LLM_MODEL
   LLM_MODEL:       ${LLM_MODEL:-mistral:7b-instruct-q4_K_M}
+  NVIDIA_API_KEY:  ${NVIDIA_API_KEY:-}
+  NVIDIA_LLM_MODEL:  ${NVIDIA_LLM_MODEL:-}
   EMBED_MODEL:     ${EMBED_MODEL:-nomic-embed-text}
   RERANKER_MODEL:  ${RERANKER_MODEL:-BAAI/bge-reranker-v2-m3}
   MAX_LOG_BYTES:   ${MAX_LOG_BYTES:-52428800}

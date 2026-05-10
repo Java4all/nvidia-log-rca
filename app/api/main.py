@@ -56,10 +56,11 @@ class AnalyzeResponse(BaseModel):
     documents: List[DocumentChunk]
 
 class HealthResponse(BaseModel):
-    status:      str
-    ollama:      str
-    llm_model:   str
-    embed_model: str
+    status:       str
+    ollama:       str
+    llm_backend:  str
+    llm_model:    str
+    embed_model:  str
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -115,16 +116,28 @@ def _stream_pipeline(question: str, tmp_path: str):
 
 @app.get("/api/health", response_model=HealthResponse)
 async def health():
-    llm_model   = os.getenv("LLM_MODEL",  "mistral:7b-instruct-q4_K_M")
     embed_model = os.getenv("EMBED_MODEL", "nomic-embed-text")
+    backend     = os.getenv("LLM_BACKEND", "ollama").lower().strip()
+    if backend == "nvidia":
+        llm_model = (
+            os.getenv("NVIDIA_LLM_MODEL", "").strip()
+            or "nvidia/llama-3.3-nemotron-super-49b-v1.5"
+        )
+    else:
+        llm_model = os.getenv("LLM_MODEL", "mistral:7b-instruct-q4_K_M")
     try:
         async with httpx.AsyncClient(timeout=5) as client:
             r  = await client.get(f"{OLLAMA_BASE_URL}/api/tags")
             ok = "ok" if r.status_code == 200 else "degraded"
     except Exception:
         ok = "unreachable"
-    return HealthResponse(status="ok", ollama=ok,
-                          llm_model=llm_model, embed_model=embed_model)
+    return HealthResponse(
+        status="ok",
+        ollama=ok,
+        llm_backend=backend,
+        llm_model=llm_model,
+        embed_model=embed_model,
+    )
 
 
 @app.get("/api/models")

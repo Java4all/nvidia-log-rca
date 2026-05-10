@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Log-RCA — architecture draft</title>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "neutral",
+      securityLevel: "loose",
+      fontFamily: "Segoe UI, system-ui, sans-serif",
+    });
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1.5rem;
+      color: #1a202c;
+      line-height: 1.35;
+      font-size: 14px;
+    }
+    h1 { font-size: 1.35rem; margin-top: 0; }
+    h2 { font-size: 1.1rem; margin: 1.25rem 0 0.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.25rem; }
+    p.tag { color: #64748b; font-size: 12px; margin: 0 0 1rem; }
+    .mermaid { margin: 0.75rem 0 1.25rem; text-align: center; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 0.5rem 0 1rem; }
+    th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
+    th { background: #f1f5f9; }
+    @media print {
+      body { padding: 0; max-width: none; font-size: 11pt; }
+      h2 { page-break-after: avoid; }
+      section { page-break-inside: avoid; margin-bottom: 1rem; }
+      .mermaid { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Log-RCA — draft slides</h1>
+<p class="tag">Minimal copy · diagrams first · print this page to PDF (Ctrl+P → Save as PDF)</p>
+
+<section>
+<h2>1. System context</h2>
+<div class="mermaid">
+flowchart LR
+  U[User / QA] --> B[Browser]
+  B --> N[nginx :80]
+  N --> UI[Chainlit UI]
+  N --> API[FastAPI]
+  UI -->|HTTP JSON/SSE| API
+  API --> O[Ollama LLM + embed]
+  API --> HF[HuggingFace cache reranker]
+</div>
+</section>
+
+<section>
+<h2>2. Containers</h2>
+<div class="mermaid">
+flowchart TB
+  subgraph Docker
+    NG[nginx]
+    UI[ui Chainlit]
+    AP[api FastAPI]
+    OL[ollama GPU]
+    VOL[(ollama_models)]
+    HFV[(hf_cache)]
+  end
+  NG --> UI
+  NG --> AP
+  UI --> AP
+  AP --> OL
+  OL --- VOL
+  AP --- HFV
+</div>
+</section>
+
+<section>
+<h2>3. Components — roles</h2>
+<table>
+  <tr><th>Component</th><th>Role</th></tr>
+  <tr><td>nginx</td><td>Reverse proxy: UI + API routes</td></tr>
+  <tr><td>Chainlit UI</td><td>Log upload, chat, live SSE steps</td></tr>
+  <tr><td>FastAPI</td><td>REST + SSE; wraps LangGraph stream</td></tr>
+  <tr><td>bat_ai</td><td>Compiled LangGraph state machine</td></tr>
+  <tr><td>Ollama</td><td>LLM + embedding endpoints</td></tr>
+  <tr><td>HybridRetriever</td><td>BM25 + FAISS over chunks</td></tr>
+  <tr><td>FlagReranker</td><td>Cross-encoder rerank (HF)</td></tr>
+</table>
+<div class="mermaid">
+flowchart LR
+  UI[Chainlit UI] --> API[FastAPI]
+  API --> LG[LangGraph bat_ai]
+  LG --> RT[HybridRetriever BM25+FAISS]
+  LG --> OL[Ollama LLM]
+  RT --> OL
+</div>
+</section>
+
+<section>
+<h2>4. LangGraph RAG pipeline</h2>
+<div class="mermaid">
+flowchart TD
+  START([start]) --> R[retrieve]
+  R --> RR[rerank]
+  RR --> G[grade_documents]
+  G --> D{relevant chunks?}
+  D -->|no / empty| TQ[transform_query]
+  TQ --> R
+  D -->|yes| GEN[generate]
+  GEN --> V{answer useful?}
+  V -->|not useful| TQ
+  V -->|not supported| GEN
+  V -->|useful| END([end])
+</div>
+</section>
+
+<section>
+<h2>5. Retrieve internals</h2>
+<div class="mermaid">
+flowchart LR
+  LOG[(log file)] --> SPLIT[chunk 20k / 10k overlap]
+  SPLIT --> BM25[BM25]
+  SPLIT --> EMB[OllamaEmbeddings]
+  EMB --> FAISS[FAISS similarity threshold]
+  BM25 --> ENS[Ensemble 0.5 / 0.5]
+  FAISS --> ENS
+</div>
+</section>
+
+<section>
+<h2>6. End-to-end flow</h2>
+<div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant UI as Chainlit
+  participant API as FastAPI
+  participant G as LangGraph
+  participant O as Ollama
+  U->>UI: log + question
+  UI->>API: POST analyze/stream
+  API->>G: stream
+  G->>O: embed / chat
+  API-->>UI: SSE steps + JSON result
+  UI-->>U: RCA + evidence
+</div>
+</section>
+
+</body>
+</html>
