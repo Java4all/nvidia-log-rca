@@ -10,7 +10,7 @@ custom_css = "/public/theme.css"
 custom_font = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
 
 [UI.theme]
-default = "light"
+default = "dark"
 layout = "wide"
 font_family = "Inter, system-ui, -apple-system, Segoe UI, sans-serif"
 

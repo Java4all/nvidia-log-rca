@@ -13,9 +13,14 @@ footer[class*="watermark"] {
   display: none !important;
 }
 
-/* Softer header separation */
+/* Header separation — light vs dark surfaces */
 header {
   border-bottom: 1px solid hsl(220 13% 91%);
+}
+
+.dark header,
+html.dark header {
+  border-bottom-color: hsl(220 14% 18%);
 }
 
 /* Composer & cards — subtle enterprise chrome */

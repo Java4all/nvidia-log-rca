@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40" width="200" height="40" role="img" aria-label="Log-RCA">
+  <rect x="0" y="4" width="32" height="32" rx="6" fill="#6ba3d6" opacity="0.15"/>
+  <path d="M8 14h16M8 20h12M8 26h16" stroke="#94c4ee" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <text x="40" y="27" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="17" font-weight="700" fill="#e8eef4">Log-RCA</text>
+</svg>
