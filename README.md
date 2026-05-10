@@ -1,6 +1,6 @@
-# 🔍 Jenkins RCA — BAT.AI
+# Log-RCA
 
-**The real NVIDIA BAT.AI (Bug Automation Tool) pipeline running locally on Ollama.**
+**Root cause analysis for build logs — NVIDIA BAT.AI–based pipeline running locally on Ollama.**
 
 This project takes the exact source files from
 `community/log_analysis_multi_agent_rag` (NVIDIA GenerativeAIExamples)

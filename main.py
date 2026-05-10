@@ -1,5 +1,5 @@
 """
-FastAPI backend for Jenkins RCA — BAT.AI
+FastAPI backend for Log-RCA
 
 Endpoints:
   POST /api/analyze          – full RCA, returns JSON when complete
@@ -34,7 +34,7 @@ NODE_LABELS = {
     "transform_query": ("🔄", "Refining query",            "Self-correcting — rewriting question for better retrieval"),
 }
 
-app = FastAPI(title="Jenkins RCA — BAT.AI API", version="1.0.0")
+app = FastAPI(title="Log-RCA API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,

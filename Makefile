@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Jenkins RCA — BAT.AI  |  Makefile
+# Log-RCA  |  Makefile
 #
 # Docker Compose automatically reads .env from the current directory,
 # so no --env-file flag is needed.
@@ -15,7 +15,7 @@ COMPOSE = docker compose
 
 help:
 	@echo ""
-	@echo "  Jenkins RCA — BAT.AI"
+	@echo "  Log-RCA"
 	@echo "  ─────────────────────────────────────────────"
 	@echo "  make setup          Create .env from .env.example"
 	@echo "  make build          Build Docker images"

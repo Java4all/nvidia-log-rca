@@ -1,0 +1,25 @@
+/**
+ * Corporate styling overrides — complements [UI.theme] in config.toml.
+ * Targets Chainlit 1.3.x layout; adjust selectors after upgrades if needed.
+ */
+
+/* Hide footer branding / open-source discovery links */
+footer a[href*="github.com/Chainlit"],
+footer a[href*="chainlit.io"],
+a[href*="github.com/Chainlit"][target="_blank"],
+[data-testid="watermark"],
+.cl-watermark,
+footer[class*="watermark"] {
+  display: none !important;
+}
+
+/* Softer header separation */
+header {
+  border-bottom: 1px solid hsl(220 13% 91%);
+}
+
+/* Composer & cards — subtle enterprise chrome */
+[data-testid="message-content"],
+main [class*="Message"] {
+  border-radius: 6px;
+}

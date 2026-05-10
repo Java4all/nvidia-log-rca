@@ -1,5 +1,5 @@
 """
-Chainlit UI — Jenkins RCA / BAT.AI
+Chainlit UI — Log-RCA
 Target users: QA engineers
 
 Key features:
@@ -46,7 +46,7 @@ async def start():
     cl.user_session.set("log_lines", None)
 
     await cl.Message(content=(
-        "## 🔍 Jenkins RCA — BAT.AI\n\n"
+        "## Log-RCA\n\n"
         "Upload a Jenkins log file and I'll identify the root cause of your build failure "
         "using a self-corrective multi-agent RAG pipeline.\n\n"
         "---\n"

@@ -1,7 +1,7 @@
 version: "3.9"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Jenkins RCA — BAT.AI  |  Docker Compose
+# Log-RCA  |  Docker Compose
 #
 # Services:
 #   ollama       – Ollama LLM + embedding server (GPU)

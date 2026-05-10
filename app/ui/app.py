@@ -1,6 +1,6 @@
 """
-Chainlit UI — Jenkins RCA / BAT.AI
-Target users: QA engineers
+Chainlit UI — Log-RCA
+Target users: QA and engineering teams
 
 Key features:
   - Log file upload (drag & drop or attach)
@@ -33,13 +33,13 @@ QA_QUICK_QUESTIONS = [
     "Summarise this log in 5 bullet points",
 ]
 
-# Step display config: node → (emoji, short label, colour hint for QA context)
+# Step display: node → (icon/emoji, short label, detail for sidebar)
 STEP_CONFIG = {
-    "retrieve":        ("🔍", "Searching log",        "Hybrid BM25 + FAISS retrieval"),
-    "rerank":          ("📊", "Ranking results",       "Scoring by relevance"),
-    "grade_documents": ("✅", "Grading chunks",        "Filtering irrelevant content"),
-    "generate":        ("🤖", "Writing RCA",           "LLM generating root cause analysis"),
-    "transform_query": ("🔄", "Refining query",        "Self-correcting — rewriting for better retrieval"),
+    "retrieve":        ("·", "Retrieve",           "Hybrid BM25 + FAISS retrieval"),
+    "rerank":          ("·", "Rank",               "Relevance scoring"),
+    "grade_documents": ("·", "Grade",              "Filtering irrelevant content"),
+    "generate":        ("·", "Analyze",            "Root cause narrative"),
+    "transform_query": ("·", "Refine query",       "Self-correcting retrieval query"),
 }
 
 
@@ -54,11 +54,10 @@ async def start():
     # Dedicated upload widget (Browse / drag-drop). Composer may not show a paperclip icon.
     uploaded = await cl.AskFileMessage(
         content=(
-            "## 🔍 Jenkins RCA — BAT.AI\n\n"
-            "Upload a Jenkins log (`.log` or `.txt`) using the **drag-and-drop area** "
-            "or **Browse** below — this app analyses build failures with a self-corrective "
-            "multi-agent RAG pipeline.\n\n"
-            "_After your log is loaded you can ask follow-up questions without uploading again._"
+            "## Log-RCA\n\n"
+            "Upload a build log (`.log` or `.txt`) via **Browse** or drag-and-drop. "
+            "The service analyses failures using retrieval-augmented multi-step reasoning.\n\n"
+            "_Once loaded, you can ask follow-up questions without uploading again._"
         ),
         accept={
             "text/plain": [".log", ".txt", ".text"],
@@ -72,7 +71,7 @@ async def start():
 
     if not uploaded:
         await cl.Message(
-            content="⚠️ No log file was received. Refresh the page to upload your Jenkins log."
+            content="No log file was received. Refresh the page to upload a build log."
         ).send()
         return
 
@@ -93,16 +92,16 @@ async def start():
         async with httpx.AsyncClient(timeout=6) as client:
             r    = await client.get(f"{API_URL}/api/health")
             data = r.json()
-        icon = "✅" if data.get("ollama") == "ok" else "⚠️"
+        ok = data.get("ollama") == "ok"
+        status = "Models ready" if ok else "Model service degraded"
         await cl.Message(content=(
-            f"{icon} **System:** "
-            f"LLM `{data.get('llm_model')}` · "
+            f"**{status}** — LLM `{data.get('llm_model')}` · "
             f"Embed `{data.get('embed_model')}` · "
-            f"Ollama `{data.get('ollama')}`"
+            f"Runtime `{data.get('ollama')}`"
         )).send()
     except Exception:
         await cl.Message(
-            content="⚠️ Cannot reach API backend. Is the stack running? (`make up`)"
+            content="Cannot reach the API backend. Confirm the stack is running."
         ).send()
 
 
@@ -146,9 +145,9 @@ async def _apply_log_session(log_path: str, log_name: str):
     cl.user_session.set("log_lines", line_count)
 
     await cl.Message(content=(
-        f"📂 **Log loaded:** `{log_name}`\n"
-        f"📏 **Lines:** {line_count:,}\n\n"
-        "Ask a question or use a quick question below to analyse this log."
+        f"**Log:** `{log_name}`  \n"
+        f"**Lines:** {line_count:,}\n\n"
+        "Ask a question or use a shortcut below."
     )).send()
 
 
@@ -162,7 +161,7 @@ async def _handle_log_upload(el):
 # ── Core analysis function ────────────────────────────────────────────────────
 
 async def run_analysis(question: str):
-    """Stream the BAT.AI pipeline and display steps + result to QA engineer."""
+    """Stream the analysis pipeline and display steps + result."""
 
     # Validate inputs
     if not question:
@@ -173,8 +172,7 @@ async def run_analysis(question: str):
     log_name = cl.user_session.get("log_name") or "jenkins.log"
     if not log_path:
         await cl.Message(content=(
-            "📎 **No log file loaded.**\n\n"
-            "Attach your Jenkins log file first using the 📎 button."
+            "**No log loaded.** Attach a build log using the attachment control."
         )).send()
         return
 
@@ -189,24 +187,24 @@ async def run_analysis(question: str):
     def _render_pipeline(current_step=None, done=False, error=None):
         """Render the live pipeline progress box."""
         all_steps = ["retrieve", "rerank", "grade_documents", "generate"]
-        lines = ["**⚙️ BAT.AI Pipeline**\n"]
+        lines = ["**Analysis pipeline**\n"]
 
         if retry_count > 0:
-            lines.append(f"> 🔄 Self-correction loop — attempt {retry_count + 1}\n")
+            lines.append(f"> Refinement pass — attempt {retry_count + 1}\n")
 
         for step in all_steps:
-            emoji, label, _ = STEP_CONFIG.get(step, ("⚙️", step, ""))
+            _mark, label, _ = STEP_CONFIG.get(step, ("·", step, ""))
             if step in steps_done:
-                lines.append(f"- ~~{label}~~ ✓")
+                lines.append(f"- ~~{label}~~ (done)")
             elif step == current_step:
-                lines.append(f"- **{emoji} {label}…**")
+                lines.append(f"- **{label}** …")
             else:
                 lines.append(f"- {label}")
 
         if error:
-            lines.append(f"\n❌ **Error:** {error}")
+            lines.append(f"\n**Error:** {error}")
         elif done:
-            lines.append("\n✅ **Complete**")
+            lines.append("\n**Complete**")
 
         return "\n".join(lines)
 
@@ -233,7 +231,7 @@ async def run_analysis(question: str):
                         err  = json.loads(body).get("detail", body.decode())
                         await pipeline_msg.remove()
                         await cl.Message(
-                            content=f"❌ **API error {resp.status_code}:** {err}"
+                            content=f"**API error {resp.status_code}:** {err}"
                         ).send()
                         return
 
@@ -257,7 +255,7 @@ async def run_analysis(question: str):
                             await pipeline_msg.update()
 
                             icon, label, detail = STEP_CONFIG.get(
-                                node, ("⚙️", node, "")
+                                node, ("·", node, "")
                             )
                             async with cl.Step(name=f"{icon} {label}") as step:
                                 step.output = detail
@@ -291,18 +289,18 @@ async def run_analysis(question: str):
         pipeline_msg.content = _render_pipeline(error="Request timed out")
         await pipeline_msg.update()
         await cl.Message(content=(
-            "⏱️ **Timed out.** The log may be large or the model is still loading. "
-            "Try again in a moment, or try a smaller/faster model."
+            "**Request timed out.** The log may be large or the model is still loading. "
+            "Retry shortly, or use a smaller model."
         )).send()
         return
     except Exception as exc:
         pipeline_msg.content = _render_pipeline(error=str(exc))
         await pipeline_msg.update()
-        await cl.Message(content=f"❌ **Unexpected error:** {exc}").send()
+        await cl.Message(content=f"**Unexpected error:** {exc}").send()
         return
 
     if not result_data:
-        await cl.Message(content="⚠️ No result received from pipeline.").send()
+        await cl.Message(content="No result received from pipeline.").send()
         return
 
     # ── Format and display RCA result ─────────────────────────────────────────
@@ -310,17 +308,17 @@ async def run_analysis(question: str):
     documents = result_data.get("documents", [])
     final_q   = result_data.get("question", question)
 
-    md = "## 🩺 Root Cause Analysis\n\n"
+    md = "## Root cause analysis\n\n"
 
     # Show if query was refined by self-correction
     if final_q != question:
-        md += f"> 🔄 **Query refined to:** _{final_q}_\n\n"
+        md += f"> **Refined query:** _{final_q}_\n\n"
 
     md += f"{answer}\n\n"
 
     # Evidence section — collapsible log excerpts with line metadata
     if documents:
-        md += f"---\n### 📄 Supporting Evidence — {len(documents)} log excerpt(s)\n\n"
+        md += f"---\n### Supporting evidence — {len(documents)} excerpt(s)\n\n"
         for i, doc in enumerate(documents[:5], 1):
             meta   = doc.get("metadata", {})
             source = meta.get("source", "")
@@ -331,7 +329,7 @@ async def run_analysis(question: str):
 
             md += (
                 f"<details>\n"
-                f"<summary>📋 {caption}</summary>\n\n"
+                f"<summary>{caption}</summary>\n\n"
                 f"```\n{snip}\n```\n\n"
                 f"</details>\n\n"
             )

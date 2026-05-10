@@ -1,19 +1,49 @@
 [project]
-name = "Jenkins RCA — BAT.AI"
+enable_telemetry = false
 
 [UI]
-name = "Jenkins RCA"
-description = "Self-corrective multi-agent RAG for Jenkins log root-cause analysis"
+name = "Log-RCA"
+description = "Log-RCA — build log root cause analysis for engineering teams"
 default_collapse_content = true
-# Show intermediate steps expanded by default so QA engineers see the pipeline
-show_readme_as_default = false
+github = ""
+custom_css = "/public/theme.css"
+custom_font = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+
+[UI.theme]
+default = "light"
+layout = "wide"
+font_family = "Inter, system-ui, -apple-system, Segoe UI, sans-serif"
+
+[UI.theme.light]
+background = "#F4F6F9"
+paper = "#FFFFFF"
+
+[UI.theme.light.primary]
+main = "#1e4976"
+dark = "#143659"
+light = "#e4ecf4"
+
+[UI.theme.light.text]
+primary = "#1a202c"
+secondary = "#4a5568"
+
+[UI.theme.dark]
+background = "#0f1419"
+paper = "#1a202c"
+
+[UI.theme.dark.primary]
+main = "#6ba3d6"
+dark = "#4a8bc8"
+light = "#1e3a52"
+
+[UI.theme.dark.text]
+primary = "#f7fafc"
+secondary = "#a0aec0"
 
 [features]
-prompt_playground = false
-# Enable action buttons (used for quick question shortcuts)
-action_buttons = true
+latex = false
+unsafe_allow_html = false
 
-# Renamed from multi_modal in Chainlit ≥1.1 — attachment control in the composer + AskFileMessage
 [features.spontaneous_file_upload]
 enabled = true
 accept = ["text/plain", "application/octet-stream", "text/*"]
